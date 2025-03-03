@@ -23,6 +23,7 @@ class Open3DSkeleton:
         relative: bool = False,
         new_colors: Optional[List[List[int]]] = None,
         new_links: Optional[List[List[int]]] = None,
+        new_sizes: Optional[List[float]] = None  # New parameter to update sphere sizes
     ) -> None:
         assert len(points_locations) == len(
             self.points
@@ -32,28 +33,26 @@ class Open3DSkeleton:
             assert len(new_colors) == len(
                 self.points
             ), "Expected the new colors to have the same number of elements of self.points!"
+        
+        if new_sizes is not None:
+            assert len(new_sizes) == len(
+                self.points
+            ), "Expected the new sizes to have the same number of elements of self.points!"
 
         for i, pt in enumerate(self.points):
             pt.translate(points_locations[i], relative=relative)
             if new_colors is not None:
                 pt.paint_uniform_color(new_colors[i])
-
-        # from docs:
-        # line_set.points = o3d.utility.Vector3dVector(points)
-        # line_set.lines = o3d.utility.Vector2iVector(lines)
-        # line_set.colors = o3d.utility.Vector3dVector(colors)
+            if new_sizes is not None:
+                pt.scale(new_sizes[i], center=pt.get_center())  # Updating sphere size
 
         if self.lines is not None:
             if isinstance(self.lines, LineMesh):
-                # self.lines.update(points_locations, new_colors)
                 raise NotImplementedError()
             else:
                 self.lines.points = o3d.utility.Vector3dVector(points_locations)
                 if new_links is not None:
-                    self.lines.lines = o3d.utility.Vector2iVector(
-                        new_links
-                    )  # necessario solo se cambia self.links
-
+                    self.lines.lines = o3d.utility.Vector2iVector(new_links)
                 if new_colors is not None:
                     self.lines.colors = o3d.utility.Vector3dVector(new_colors)
 
